@@ -1,4 +1,4 @@
-const DATA_URL = 'https://unpkg.com/jpn-atlas@1/japan/japan.json';
+const DATA_URL = 'https://raw.githubusercontent.com/dataofjapan/land/master/japan.topojson';
 const svg = d3.select('#map');
 const wrap = document.querySelector('#mapWrap');
 const loading = document.querySelector('#loading');
@@ -7,7 +7,7 @@ let mode = 'equal';
 let centerLon = 150;
 let activeRegion = 'all';
 let showPref = true, showGrid = true, showLabels = true;
-let projection, path, baseScale;
+let projection, path;
 let zoom;
 const g = svg.append('g');
 const gridG = g.append('g');
@@ -18,27 +18,31 @@ const overlayG = g.append('g');
 
 const regions = {
   all: null,
-  hokkaido: [139, 44, 146, 42],
+  hokkaido: [139, 46, 146, 41],
   honshu: [128, 42, 143, 33],
   shikoku: [132, 35, 135, 32],
   kyushu: [129, 34, 132, 30],
   okinawa: [121, 31, 132, 23],
-  north: [140, 47, 149, 43]
+  north: [140, 48, 151, 42]
 };
 
 function size(){ return [wrap.clientWidth, wrap.clientHeight]; }
 
 function makeProjection(){
   const [w,h] = size();
+
   if(mode === 'equal'){
-    projection = d3.geoEqualEarth().rotate([-centerLon,0,0]);
+    // dataofjapan/land is geographic (longitude/latitude), so apply Equal Earth exactly once.
+    projection = d3.geoEqualEarth()
+      .rotate([-centerLon, 0, 0]);
   }else{
-    projection = d3.geoMercator().center([centerLon,36]).scale(1);
+    projection = d3.geoMercator()
+      .rotate([-centerLon, 0, 0]);
   }
+
   path = d3.geoPath(projection);
   const target = activeRegion === 'all' ? country : regionFeature(activeRegion);
   if(target) projection.fitExtent([[28,25],[w-28,h-28]], target);
-  baseScale = projection.scale();
 }
 
 function regionFeature(name){
@@ -56,6 +60,7 @@ function regionFeature(name){
 function draw(){
   const [w,h] = size();
   makeProjection();
+
   gridG.selectAll('*').remove();
   landG.selectAll('*').remove();
   boundaryG.selectAll('*').remove();
@@ -68,16 +73,21 @@ function draw(){
   }
 
   landG.append('path').datum(country).attr('class','land').attr('d',path);
-  if(showPref && prefMesh) boundaryG.append('path').datum(prefMesh).attr('class','pref-boundary').attr('d',path);
+  if(showPref && prefMesh){
+    boundaryG.append('path').datum(prefMesh).attr('class','pref-boundary').attr('d',path);
+  }
 
   if(showLabels) drawLabels();
   drawScale(w,h);
-  applyZoomReset();
+  resetZoom();
+
   document.querySelector('#projectionLabel').innerHTML = mode === 'equal'
     ? `イコールアース<br><small>Equal Earth / ${centerLon}°E</small>`
     : `通常の地図<br><small>Mercator / ${centerLon}°E</small>`;
   document.querySelector('#centerLonValue').textContent = `${centerLon}°E`;
-  document.querySelector('#scaleText').textContent = mode === 'equal' ? '正積図法：面積を保つ' : '比較用：メルカトル図法';
+  document.querySelector('#scaleText').textContent = mode === 'equal'
+    ? '正積図法：面積を保つ'
+    : '比較用：メルカトル図法';
 }
 
 function drawLabels(){
@@ -90,25 +100,41 @@ function drawLabels(){
     ['日本海',136.2,39.3,'ocean-label'],
     ['太平洋',151.0,34.0,'ocean-label'],
     ['東シナ海',124.8,29.0,'ocean-label'],
-    ['オホーツク海',146.0,49.0,'ocean-label']
+    ['オホーツク海',146.0,48.0,'ocean-label']
   ];
+
   labels.forEach(([text,lon,lat,cls])=>{
     const p = projection([lon,lat]);
     if(!p) return;
-    labelG.append('text').attr('class',cls).attr('x',p[0]).attr('y',p[1]).attr('text-anchor','middle').text(text);
+    labelG.append('text')
+      .attr('class',cls)
+      .attr('x',p[0]).attr('y',p[1])
+      .attr('text-anchor','middle')
+      .text(text);
   });
-  // Reference labels for the four northern islands. Their exact display is deliberately separated from administrative polygons.
+
+  // 地図データの行政境界とは分離して、北方領土の位置を参考表示する。
   const north = [
-    ['択捉島',147.1,45.0],['国後島',145.9,44.1],['色丹島',146.9,43.8],['歯舞群島',146.3,43.5]
+    ['択捉島',147.1,45.0],
+    ['国後島',145.9,44.1],
+    ['色丹島',146.9,43.8],
+    ['歯舞群島',146.3,43.5]
   ];
   north.forEach(([text,lon,lat])=>{
-    const p = projection([lon,lat]); if(!p) return;
-    labelG.append('text').attr('class','territory-label').attr('x',p[0]+4).attr('y',p[1]).text(text);
+    const p = projection([lon,lat]);
+    if(!p) return;
+    labelG.append('text')
+      .attr('class','territory-label')
+      .attr('x',p[0]+4).attr('y',p[1])
+      .text(text);
   });
+
   const jp = projection([147.0,46.0]);
   if(jp){
-    labelG.append('path').attr('class','north-bracket').attr('d',`M${jp[0]},${jp[1]} h18 v${Math.min(45,h/10)} h-18`);
-    labelG.append('text').attr('class','territory-label').attr('x',jp[0]+25).attr('y',jp[1]+18).text('北方領土');
+    labelG.append('text')
+      .attr('class','territory-label')
+      .attr('x',jp[0]+25).attr('y',jp[1]+18)
+      .text('北方領土');
   }
 }
 
@@ -121,24 +147,36 @@ function drawScale(w,h){
   overlayG.append('text').attr('class','scale-label').attr('x',x+len).attr('y',y-9).attr('text-anchor','end').text('1,000 km');
 }
 
-function applyZoomReset(){
+function resetZoom(){
   if(!zoom){
-    zoom = d3.zoom().scaleExtent([0.65,12]).on('zoom', e=>g.attr('transform',e.transform));
+    zoom = d3.zoom()
+      .scaleExtent([0.65,12])
+      .on('zoom', e => g.attr('transform', e.transform));
     svg.call(zoom);
   }
-  svg.call(zoom.transform,d3.zoomIdentity);
+  svg.call(zoom.transform, d3.zoomIdentity);
 }
 
 function updateRegionButtons(){
-  document.querySelectorAll('[data-region]').forEach(b=>b.classList.toggle('active',b.dataset.region===activeRegion));
+  document.querySelectorAll('[data-region]').forEach(b=>
+    b.classList.toggle('active',b.dataset.region===activeRegion)
+  );
 }
 
 async function init(){
   try{
     topology = await d3.json(DATA_URL);
-    country = topojson.feature(topology,topology.objects.country);
-    prefectures = topojson.feature(topology,topology.objects.prefectures);
-    prefMesh = topojson.mesh(topology,topology.objects.prefectures,(a,b)=>a!==b);
+
+    // dataofjapan/land の japan.topojson は objects.japan に
+    // 47都道府県の地理座標（未投影）を持つ。
+    country = topojson.feature(topology, topology.objects.japan);
+    prefectures = country;
+    prefMesh = topojson.mesh(
+      topology,
+      topology.objects.japan,
+      (a,b) => a !== b
+    );
+
     loading.remove();
     draw();
   }catch(err){
@@ -147,13 +185,37 @@ async function init(){
   }
 }
 
-document.querySelectorAll('input[name="projection"]').forEach(el=>el.addEventListener('change',e=>{mode=e.target.value;draw()}));
-document.querySelector('#centerLon').addEventListener('input',e=>{centerLon=+e.target.value;draw()});
-document.querySelector('#prefToggle').addEventListener('change',e=>{showPref=e.target.checked;draw()});
-document.querySelector('#gridToggle').addEventListener('change',e=>{showGrid=e.target.checked;draw()});
-document.querySelector('#labelsToggle').addEventListener('change',e=>{showLabels=e.target.checked;draw()});
-document.querySelectorAll('[data-region]').forEach(b=>b.addEventListener('click',()=>{activeRegion=b.dataset.region;updateRegionButtons();draw()}));
-document.querySelector('#resetBtn').addEventListener('click',()=>{activeRegion='all';updateRegionButtons();draw()});
+document.querySelectorAll('input[name="projection"]').forEach(el=>
+  el.addEventListener('change',e=>{mode=e.target.value;draw();})
+);
+document.querySelector('#centerLon').addEventListener('input',e=>{
+  centerLon=+e.target.value;
+  draw();
+});
+document.querySelector('#prefToggle').addEventListener('change',e=>{
+  showPref=e.target.checked;
+  draw();
+});
+document.querySelector('#gridToggle').addEventListener('change',e=>{
+  showGrid=e.target.checked;
+  draw();
+});
+document.querySelector('#labelsToggle').addEventListener('change',e=>{
+  showLabels=e.target.checked;
+  draw();
+});
+document.querySelectorAll('[data-region]').forEach(b=>
+  b.addEventListener('click',()=>{
+    activeRegion=b.dataset.region;
+    updateRegionButtons();
+    draw();
+  })
+);
+document.querySelector('#resetBtn').addEventListener('click',()=>{
+  activeRegion='all';
+  updateRegionButtons();
+  draw();
+});
 document.querySelector('#zoomIn').addEventListener('click',()=>svg.transition().call(zoom.scaleBy,1.4));
 document.querySelector('#zoomOut').addEventListener('click',()=>svg.transition().call(zoom.scaleBy,1/1.4));
 window.addEventListener('resize',()=>draw());
