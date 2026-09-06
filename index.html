@@ -28,6 +28,16 @@
     </div>
     <div id="mapWrap">
       <svg id="map" role="img" aria-label="イコールアース図法による日本地図"></svg>
+      <div id="compareWrap">
+        <div class="compare-pane">
+          <div class="compare-title">イコールアース <small>Equal Earth</small></div>
+          <svg id="compareEqual" aria-label="イコールアース図法"></svg>
+        </div>
+        <div class="compare-pane">
+          <div class="compare-title">メルカトル <small>Mercator</small></div>
+          <svg id="compareMercator" aria-label="メルカトル図法"></svg>
+        </div>
+      </div>
       <div id="loading">地図データを読み込んでいます…</div>
     </div>
     <div class="map-footer"><span id="scaleText">—</span><span>ドラッグで移動 / ホイール・ピンチで拡大縮小</span></div>
@@ -38,6 +48,7 @@
       <h2>表示設定</h2>
       <label class="radio"><input type="radio" name="projection" value="equal" checked> イコールアース</label>
       <label class="radio"><input type="radio" name="projection" value="mercator"> 通常の地図（メルカトル）</label>
+      <label class="radio"><input type="radio" name="projection" value="compare"> <strong>左右で比較</strong></label>
       <div class="field">
         <label for="centerLon">中央経線 <strong id="centerLonValue">150°E</strong></label>
         <input id="centerLon" type="range" min="110" max="170" value="150" step="1">
@@ -63,17 +74,16 @@
     </section>
 
     <section class="info-card">
-      <h2>この地図について</h2>
-      <p>イコールアース図法は、世界の<strong>面積のバランスを保ちながら</strong>全体を見やすく表現する正積図法です。</p>
-      <p>この初版では、国土地理院「地球地図日本」を元にした日本のTopoJSONデータを使用しています。</p>
-      <p class="note">※ 北方領土の表示は地図データの境界表現に依存します。領土・行政区画の最新の公的情報については国土地理院等の公式資料をご確認ください。</p>
+      <h2>比較モードについて</h2>
+      <p>左右比較では、<strong>同じ縮尺</strong>・同じ中央経線で2つの図法を並べます。</p>
+      <p>Equal Earthは面積を保つ代わりに形を変形させます。メルカトルと見比べることで、日本列島の見え方の違いを確認できます。</p>
     </section>
 
     <section class="card small">
       <h2>データ・技術</h2>
       <ul>
-        <li>地図データ：GSI Global Map Japan 2016系</li>
-        <li>投影：D3 Equal Earth</li>
+        <li>地図データ：地球地図日本系 TopoJSON</li>
+        <li>投影：D3 Equal Earth / Mercator</li>
         <li>表示：SVG / d3-geo / TopoJSON</li>
       </ul>
     </section>
