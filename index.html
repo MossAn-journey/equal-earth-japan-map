@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>日本地図ビューア — イコールアース図法</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div>
+    <p class="eyebrow">EQUAL EARTH JAPAN MAP</p>
+    <h1>日本地図ビューア <span>— イコールアース図法</span></h1>
+    <p class="lead">日本列島を、面積を保つイコールアース図法で見るためのWeb地図です。</p>
+  </div>
+  <a class="source-link" href="https://www.gsi.go.jp/" target="_blank" rel="noreferrer">国土地理院</a>
+</header>
+
+<main class="layout">
+  <section class="map-panel">
+    <div class="map-toolbar">
+      <div class="projection-badge" id="projectionLabel">イコールアース<br><small>Equal Earth / 150°E</small></div>
+      <div class="toolbar-actions">
+        <button id="resetBtn">日本全体</button>
+        <button id="zoomIn">＋</button>
+        <button id="zoomOut">−</button>
+      </div>
+    </div>
+    <div id="mapWrap">
+      <svg id="map" role="img" aria-label="イコールアース図法による日本地図"></svg>
+      <div id="loading">地図データを読み込んでいます…</div>
+    </div>
+    <div class="map-footer"><span id="scaleText">—</span><span>ドラッグで移動 / ホイール・ピンチで拡大縮小</span></div>
+  </section>
+
+  <aside class="sidebar">
+    <section class="card">
+      <h2>表示設定</h2>
+      <label class="radio"><input type="radio" name="projection" value="equal" checked> イコールアース</label>
+      <label class="radio"><input type="radio" name="projection" value="mercator"> 通常の地図（メルカトル）</label>
+      <div class="field">
+        <label for="centerLon">中央経線 <strong id="centerLonValue">150°E</strong></label>
+        <input id="centerLon" type="range" min="110" max="170" value="150" step="1">
+      </div>
+      <div class="checks">
+        <label><input id="prefToggle" type="checkbox" checked> 都道府県境</label>
+        <label><input id="gridToggle" type="checkbox" checked> 経緯線</label>
+        <label><input id="labelsToggle" type="checkbox" checked> 地域ラベル</label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>表示範囲</h2>
+      <div class="region-grid">
+        <button data-region="all" class="active">日本全体</button>
+        <button data-region="hokkaido">北海道</button>
+        <button data-region="honshu">本州</button>
+        <button data-region="kyushu">九州</button>
+        <button data-region="shikoku">四国</button>
+        <button data-region="okinawa">沖縄・南西諸島</button>
+        <button data-region="north">北方領土</button>
+      </div>
+    </section>
+
+    <section class="info-card">
+      <h2>この地図について</h2>
+      <p>イコールアース図法は、世界の<strong>面積のバランスを保ちながら</strong>全体を見やすく表現する正積図法です。</p>
+      <p>この初版では、国土地理院「地球地図日本」を元にした日本のTopoJSONデータを使用しています。</p>
+      <p class="note">※ 北方領土の表示は地図データの境界表現に依存します。領土・行政区画の最新の公的情報については国土地理院等の公式資料をご確認ください。</p>
+    </section>
+
+    <section class="card small">
+      <h2>データ・技術</h2>
+      <ul>
+        <li>地図データ：GSI Global Map Japan 2016系</li>
+        <li>投影：D3 Equal Earth</li>
+        <li>表示：SVG / d3-geo / TopoJSON</li>
+      </ul>
+    </section>
+  </aside>
+</main>
+
+<footer>Equal Earth Japan Map · 地球を、同じ面積で、見やすく。</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<script src="app.js"></script>
+</body>
+</html>
